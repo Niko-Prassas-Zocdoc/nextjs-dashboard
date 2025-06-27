@@ -2,30 +2,48 @@ const js = require('@eslint/js');
 const tseslint = require('typescript-eslint');
 const nextPlugin = require('@next/eslint-plugin-next');
 
-/** @type {import("eslint").Linter.FlatConfig[]} */
 module.exports = [
-  // Define base file patterns and parser options
+  // Global ignores and file globs
   {
     files: ['**/*.{js,ts,jsx,tsx}'],
     ignores: ['**/node_modules/**', '**/.next/**', '**/dist/**'],
+  },
+
+  // JavaScript base config
+  {
+    files: ['**/*.js', '**/*.jsx'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
+    },
+    ...js.configs.recommended,
+  },
+
+  // TypeScript config with type-aware rules
+  {
+    files: ['**/*.ts', '**/*.tsx'],
+    languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: './tsconfig.json',
+        project: ['./tsconfig.json'],
+        tsconfigRootDir: __dirname,
+        sourceType: 'module',
       },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint.plugin,
+    },
+    rules: {
+      ...tseslint.configs.recommendedTypeChecked[0].rules,
+
+      // Custom TypeScript rule overrides
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     },
   },
 
-  // ESLint's base recommended rules for JavaScript
-  js.configs.recommended,
-
-  // TypeScript rules with type-checking
-  ...tseslint.configs.recommendedTypeChecked,
-
-  // Next.js plugin with Core Web Vitals
+  // Next.js Core Web Vitals config
   {
+    files: ['**/*.{js,ts,jsx,tsx}'],
     plugins: {
       '@next/next': nextPlugin,
     },
@@ -34,12 +52,11 @@ module.exports = [
     },
   },
 
-  // Your custom rules
-  // {
-  //   rules: {
-  //     'no-console': 'warn',
-  //     'no-unused-vars': 'warn',
-  //     '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-  //   },
-  // },
+  // Optional: Global JS/TS custom rules (not plugin-based)
+  {
+    rules: {
+      'no-console': 'warn',
+      'no-unused-vars': 'warn',
+    },
+  },
 ];
